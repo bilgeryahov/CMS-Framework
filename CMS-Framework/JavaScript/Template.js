@@ -1,5 +1,19 @@
 /**
- * Function - class, used to deal with templates.
+ * Class used for creating instances of template
+ * objects. Motivation for creating this solution
+ * came from the fact that the static HTML files
+ * get too clumsy with all the HTML contenct written
+ * on the on beforehand.
+ *
+ * This class provides simple-to-complex functionality,
+ * depending on the needs.
+ *
+ * Can be used to generate static templates with initial
+ * data.
+ *
+ * Can be used to generate flexible templates, with data
+ * being added later and (or) the template itself being
+ * displayed or hidden.
  *
  * @param $templatePath
  * @param $placeholderName
@@ -10,25 +24,18 @@
 
 function Template($templatePath, $placeholderName, $templateData){
 
-    // Make sure that the template data comes as an object.
     if(!DevelopmentHelpers.isObject($templateData)){
 
         console.error('Template.constructor(): The template data should be an object!');
         return;
     }
 
-    // Initial private attributes.
     const _templatePath = $templatePath;
     const _placeholderName = $placeholderName;
-
-    // Can be (afterwards) modified.
     let _templateData = $templateData;
-
-    // Will be populated later.
     let _placeholder = {};
     let _template = {};
 
-    // Used to add (afterwards) data to a template.
     const addAfterTemplateData = function ($data) {
 
         if(!DevelopmentHelpers.isObject($data)){
@@ -40,7 +47,6 @@ function Template($templatePath, $placeholderName, $templateData){
         _templateData = $data;
     };
 
-    // Tries to fetch the placeholder from the host page.
     const getPlaceholder = function () {
 
         _placeholder = $(_placeholderName);
@@ -53,7 +59,6 @@ function Template($templatePath, $placeholderName, $templateData){
         return true;
     };
 
-    // Tries to fetch the template from the module-html file.
     const getTemplate = function ($proceedGeneration) {
 
         new Request({
@@ -76,7 +81,6 @@ function Template($templatePath, $placeholderName, $templateData){
         }).send();
     };
 
-    // Tries to generate the template on the host page with the template data.
     const generateTemplate = function () {
 
         const $compiled = Handlebars.compile(_template);
@@ -86,7 +90,8 @@ function Template($templatePath, $placeholderName, $templateData){
     /**
      * @public
      *
-     * Kicks-in the straight-forward process.
+     * Straight-forward process of rendering
+     * the template on the page.
      *
      * @return void
      */
@@ -95,7 +100,6 @@ function Template($templatePath, $placeholderName, $templateData){
 
         if(getPlaceholder()){
 
-            // Proceed to generation (straight - forward).
             getTemplate(true);
         }
     };
@@ -103,7 +107,7 @@ function Template($templatePath, $placeholderName, $templateData){
     /**
      * @public
      *
-     * Makes the placeholder visible.
+     * Makes the template placeholder visible.
      *
      * @return void
      */
@@ -116,7 +120,7 @@ function Template($templatePath, $placeholderName, $templateData){
     /**
      * @public
      *
-     * Makes the placeholder invisible.
+     * Makes the template placeholder invisible.
      *
      * @return void
      */
@@ -129,7 +133,8 @@ function Template($templatePath, $placeholderName, $templateData){
     /**
      * @public
      *
-     * Prepares the template without generating.
+     * Makes sure that the module (template) is
+     * loaded, but not rendered.
      *
      * @return void
      */
@@ -138,7 +143,6 @@ function Template($templatePath, $placeholderName, $templateData){
 
         if(getPlaceholder()){
 
-            // No generation.
             getTemplate(false);
         }
     };
@@ -146,14 +150,20 @@ function Template($templatePath, $placeholderName, $templateData){
     /**
      * @public
      *
-     * Calls for displaying the template with additional data.
+     * Renders the template afterwards, with additional
+     * data (if needed).
      *
-     * @param $data
+     * @param $data [object]
      *
      * @return void
      */
 
     this.displayAfter = function ($data) {
+
+        if(!$data){
+
+            $data = {};
+        }
 
         addAfterTemplateData($data);
         generateTemplate();
