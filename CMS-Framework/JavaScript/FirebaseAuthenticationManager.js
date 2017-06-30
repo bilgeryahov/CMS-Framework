@@ -22,6 +22,22 @@ const FirebaseAuthenticationManager = (function(){
         // Auth ObserverManager of FirebaseAuthenticationManager.
         _authObserverManager: {},
 
+        /*
+         * Observer manager for the modules, whose
+         * display state depend on the Authentication.
+         *
+         * This Observer Manager basically makes sure
+         * that when an attempt for login is made, the correct modules
+         * will get displayed and the correct ones will get hidden.
+         *
+         * The Observer Manager will send an update when a login is attempted.
+         *
+         * The Observer Manager will send an update when login attempt gets a result
+         * (does not matter success or failure).
+         */
+
+        _authAttemptDisplayObserverManager: {},
+
         /**
          * Initializing.
          *
@@ -51,12 +67,28 @@ const FirebaseAuthenticationManager = (function(){
 
             $self._authObserverManager.clearObservers();
 
+            // Try to set the Auth Attempt Observer Manager.
+            try{
+
+                $self._authAttemptDisplayObserverManager = new ObserverManager();
+            }
+            catch($error){
+
+                console.error('FirebaseAuthenticationManager.init(): ' + $error);
+                return;
+            }
+
+            $self._authAttemptDisplayObserverManager.clearObservers();
+
             firebase.auth().onAuthStateChanged(function($currentUser){
 
                 if($currentUser){
 
                     $self._currentUser = $currentUser;
                     $self._authObserverManager.updateObservers('USER 1');
+
+                    // Update Auth Display Observer Manager's observers that the login attempt has finished.
+                    $self._authAttemptDisplayObserverManager.updateObservers('LoginAttemptFinish');
                 }
                 else{
 
@@ -80,6 +112,18 @@ const FirebaseAuthenticationManager = (function(){
 
             const $self = this;
             return $self._authObserverManager;
+        },
+
+        /**
+         * Gets the AuthAttemptDisplayObserverManager of FirebaseAuthenticationManager.
+         *
+         * @return {Logic._authAttemptDisplayObserverManager|{}}
+         */
+
+        getAuthAttemptDisplayObserverManager(){
+
+            const $self = this;
+            return $self._authAttemptDisplayObserverManager;
         },
 
         /**
@@ -110,10 +154,17 @@ const FirebaseAuthenticationManager = (function(){
 
             const $self = this;
 
+            // Update Auth Display Observer Manager's observers...
+            $self._authAttemptDisplayObserverManager.updateObservers('LoginAttemptStart');
+
             if($self.getCurrentUser()){
 
                 $self._authError = 'You cannot login, you are already logged in!';
                 $self._authObserverManager.updateObservers('ERROR 1');
+
+                // Update Auth Display Observer Manager's observers...
+                $self._authAttemptDisplayObserverManager.updateObservers('LoginAttemptFinish');
+
                 return;
             }
 
@@ -136,6 +187,9 @@ const FirebaseAuthenticationManager = (function(){
                         console.error('FirebaseAuthenticationManager.login(): ');
                         console.error($error);
                     }
+
+                    // Update Auth Display Observer Manager's observers...
+                    $self._authAttemptDisplayObserverManager.updateObservers('LoginAttemptFinish');
 
                     $self._authObserverManager.updateObservers('ERROR 1');
                 });
@@ -219,6 +273,11 @@ const FirebaseAuthenticationManager = (function(){
         getAuthObserverManager(){
 
             return Logic.getAuthObserverManager();
+        },
+
+        getAuthAttemptDisplayObserverManager(){
+
+            return Logic.getAuthAttemptDisplayObserverManager();
         },
 
         getCurrentUser(){
