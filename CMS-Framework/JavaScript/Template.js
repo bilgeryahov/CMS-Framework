@@ -3,7 +3,7 @@
  * objects. Motivation for creating this solution
  * came from the fact that the static HTML files
  * get too clumsy with all the HTML contenct written
- * on the on beforehand.
+ * on them, on beforehand.
  *
  * This class provides simple-to-complex functionality,
  * depending on the needs.
@@ -35,6 +35,7 @@ function Template($templatePath, $placeholderName, $templateData){
     let _templateData = $templateData;
     let _placeholder = {};
     let _template = {};
+    let _mainFunctionExecuted = false;
 
     const addAfterTemplateData = function ($data) {
 
@@ -65,6 +66,8 @@ function Template($templatePath, $placeholderName, $templateData){
             url: _templatePath,
             method: 'get',
             onSuccess($template){
+
+                _mainFunctionExecuted = true;
 
                 _template = $template;
 
@@ -97,6 +100,12 @@ function Template($templatePath, $placeholderName, $templateData){
      */
 
     this.displayMain = function () {
+
+        if(_mainFunctionExecuted === true){
+
+            console.error(`Template.displayMain(): a Main function has already been executed.`);
+            return;
+        }
 
         if(getPlaceholder()){
 
@@ -139,7 +148,13 @@ function Template($templatePath, $placeholderName, $templateData){
      * @return void
      */
 
-    this.prepare = function () {
+    this.prepareMain = function () {
+
+        if(_mainFunctionExecuted === true){
+
+            console.error(`Template.prepareMain(): a Main function has already been executed.`);
+            return;
+        }
 
         if(getPlaceholder()){
 
