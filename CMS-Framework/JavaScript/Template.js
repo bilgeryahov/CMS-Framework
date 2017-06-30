@@ -166,19 +166,14 @@ function Template($templatePath, $placeholderName, $templateData){
      * @public
      *
      * Renders the template afterwards, with additional
-     * data (if needed).
+     * data.
      *
-     * @param $data [object]
+     * @param $data
      *
      * @return void
      */
 
     this.displayAfter = function ($data) {
-
-        if(!$data){
-
-            $data = {};
-        }
 
         addAfterTemplateData($data);
         generateTemplate();
