@@ -4,7 +4,7 @@
  * Exposes Firebase authentication management functionality.
  *
  * @author Bilger Yahov <bayahov1@gmail.com>
- * @version 3.4.0
+ * @version 3.5.0
  * @copyright © 2017 Bilger Yahov, all rights reserved.
  */
 
@@ -55,17 +55,45 @@ const FirebaseAuthenticationManager = (function(){
 
                 if($currentUser){
 
-                    $self._currentUser = $currentUser;
-                    $self._authObserverManager.updateObservers('USER 1');
+                    // If there is a user, set them a token.
+                    $self.setUserToken(function (error, data) {
+
+                        if(error){
+
+                            console.error('FirebaseAuthenticationManager.init(): Could not get a token for the' +
+                                ' logged in user');
+                            console.log(error);
+                            return;
+                        }
+
+                        // Everything fine.
+                        if(data){
+
+	                        $self._currentUser = $currentUser;
+	                        $self._authObserverManager.updateObservers('USER 1');
+                        }
+                    });
                 }
                 else{
 
-                    // When the user logs out, make sure to clean his token.
-                    let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
-                    sessionStorage.removeItem('FirebaseUserToken-' + $apiKey);
+                    // When the user logs out, make sure to clean their token.
+                    $self.clearUserToken(function (error, data) {
 
-                    $self._currentUser = null;
-                    $self._authObserverManager.updateObservers('USER 0');
+                       if(error){
+
+	                       console.error('FirebaseAuthenticationManager.init(): Could not clear the token for the' +
+		                       ' logged out user');
+	                       console.log(error);
+	                       return;
+                       }
+
+                       // Everything fine.
+                       if(data){
+
+	                       $self._currentUser = null;
+	                       $self._authObserverManager.updateObservers('USER 0');
+                       }
+                    });
                 }
             });
         },
@@ -182,14 +210,16 @@ const FirebaseAuthenticationManager = (function(){
         },
 
         /**
-         * Gets verification token for the currently signed-in user.
+         * Sets token for the currently signed-in user.
+         * This function is not accessible from outside.
+         * This function can be performed only by inner functions.
          *
          * @param $callback
          *
          * @return void
          */
 
-        getUserToken($callback){
+        setUserToken($callback){
 
             firebase.auth()
                 .currentUser
@@ -206,6 +236,48 @@ const FirebaseAuthenticationManager = (function(){
 
                     return $callback($error, null);
                 });
+        },
+
+	    /**
+         * Clears the token of the signed-out user.
+         *
+	     * @param callback
+	     *
+         * @return success execution of the callback
+	     */
+
+        clearUserToken(callback){
+
+	        let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
+	        sessionStorage.removeItem('FirebaseUserToken-' + $apiKey);
+
+	        return callback(null, true);
+        },
+
+	    /**
+         * Used to externally ask for a fresh token.
+         *
+	     * @param callback
+         *
+         * @return execution of the callback
+	     */
+
+	    refreshUserToken(callback){
+
+            const $self = this;
+	        $self.setUserToken(function (error, data) {
+
+		        if(error){
+
+			        return callback(error, null);
+		        }
+
+		        // Everything fine.
+		        if(data){
+
+		            return callback(null, true);
+                }
+	        });
         }
     };
 
@@ -241,9 +313,9 @@ const FirebaseAuthenticationManager = (function(){
             Logic.logout();
         },
 
-        getUserToken($callback){
+	    refreshUserToken(callback){
 
-            Logic.getUserToken($callback);
+            Logic.refreshUserToken(callback);
         }
     }
 })();
