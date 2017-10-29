@@ -471,16 +471,26 @@ const FirebaseDatabaseClient = (function(){
          * @param $path
          * @param $callback
          *
-         * @return void
+         * @return execution of callback
          */
 
         firebaseDELETE($path, $callback){
 
-            let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
-            let $token = sessionStorage.getItem('FirebaseUserToken-' + $apiKey);
+	        const $self = this;
 
-            const $request = new Request({
-                url: EnvironmentHelper.getFirebaseSettings().databaseURL + $path + '.json?auth=' + $token,
+	        // Check for initialization errors.
+	        if($self._initializationError){
+
+		        return $callback({
+				        message: 'FirebaseDatabaseClient.firebaseDELETE(): There is an initialization error'
+			        },
+			    null);
+	        }
+
+            const $deleteRequest = new Request({
+                url: EnvironmentHelper.getFirebaseSettings().databaseURL
+                + $path + '.json?auth='
+                + $self._requestToken,
                 method: 'DELETE',
                 headers:{
                     'Content-Type':'application/json; charset=UTF-8'
@@ -493,56 +503,76 @@ const FirebaseDatabaseClient = (function(){
                 },
                 onFailure: function($xhr){
 
-                    let $response = JSON.decode($xhr.response);
+	                let $response = JSON.decode($xhr.response);
 
-                    // Check if it says that the token has expired.
-                    if($response.hasOwnProperty('error') && $response.error === 'Auth token is expired'){
+	                // Check if it says that the token has expired.
+	                if($response.hasOwnProperty('error') && $response.error === 'Auth token is expired'){
 
-                        // Get token.
-                        FirebaseAuthenticationManager.getUserToken(function ($error, $tokenPresent) {
+		                // Ask for a fresh token.
+		                $self.requestTokenRefresh(function ($error, $data) {
 
-                            if($error){
+			                if($error){
 
-                                console.error('FirebaseDatabaseClient.firebaseDELETE(): ' + $error);
-                                return $callback('Problem while trying to get token.', null);
-                            }
+				                console.error('FirebaseDatabaseClient.firebaseDELETE(): ');
+				                console.error($error);
+				                return $callback({
+						                message: 'Problem while trying to request refresh token.'
+					                },
+					            null);
+			                }
 
-                            $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
-                            $token = sessionStorage.getItem('FirebaseUserToken-' + $apiKey);
-                            $request.options.url = EnvironmentHelper.getFirebaseSettings().databaseURL + $path + '.json?auth=' + $token;
-                            $request.send();
-                        });
+			                if($data){
 
-                        return;
-                    }
+				                // Token is there. Update the request and send it.
+				                $deleteRequest.options.url = EnvironmentHelper.getFirebaseSettings().databaseURL
+					                + $path + '.json?auth='
+					                + $self._requestToken;
+				                $deleteRequest.send();
+			                }
+		                });
+	                }
+	                else{
 
-                    console.error('FirebaseDatabaseClient.firebaseDELETE(): ' + $xhr.response);
-                    return $callback('DELETE request for ' + $path + ' had an error!', null);
+		                console.error('FirebaseDatabaseClient.firebaseDELETE(): ');
+		                console.error($xhr);
+		                return $callback({
+				                message: 'Data for ' + $path + ' cannot be DELETE because an error!'
+			                },
+			            null);
+	                }
                 }
             });
 
-            if(!$token || $token === '' || typeof $token === 'undefined'){
+	        // Check if the request is good to go.
+	        if($self._requestToken){
 
-                // Get token.
-                FirebaseAuthenticationManager.getUserToken(function ($error, $tokenPresent) {
+		        $deleteRequest.send();
+	        }
+	        else{
 
-                    if($error){
+		        // Ask for a fresh token.
+		        $self.requestTokenRefresh(function ($error, $data) {
 
-                        console.error('FirebaseDatabaseClient.firebaseDELETE(): ' + $error);
-                        return $callback('Problem while trying to get token.', null);
-                    }
+			        if($error){
 
-                    $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
-                    $token = sessionStorage.getItem('FirebaseUserToken-' + $apiKey);
-                    $request.options.url = EnvironmentHelper.getFirebaseSettings().databaseURL + $path + '.json?auth=' + $token;
-                    $request.send();
-                });
+				        console.error('FirebaseDatabaseClient.firebaseDELETE(): ');
+				        console.error($error);
+				        return $callback({
+						        message: 'Problem while trying to request refresh token.'
+					        },
+					    null);
+			        }
 
-                return;
-            }
+			        if($data){
 
-            // There is a token.
-            $request.send();
+				        // Token is there. Update the request and send it.
+				        $deleteRequest.options.url = EnvironmentHelper.getFirebaseSettings().databaseURL
+					        + $path + '.json?auth='
+					        + $self._requestToken;
+				        $deleteRequest.send();
+			        }
+		        });
+	        }
         },
 
         /**
