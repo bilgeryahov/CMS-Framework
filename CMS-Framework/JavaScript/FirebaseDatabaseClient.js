@@ -358,17 +358,28 @@ const FirebaseDatabaseClient = (function(){
          * @param $data
          * @param $callback
          *
-         * @return void
+         * @return execution of callback
          */
 
         firebasePOST($path, $data, $callback){
 
-            const $postData = JSON.stringify($data);
-            let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
-            let $token = sessionStorage.getItem('FirebaseUserToken-' + $apiKey);
+	        const $self = this;
 
-            const $request = new Request({
-                url: EnvironmentHelper.getFirebaseSettings().databaseURL + $path + '.json?auth=' + $token,
+	        // Check for initialization errors.
+	        if($self._initializationError){
+
+		        return $callback({
+				        message: 'FirebaseDatabaseClient.firebasePOST(): There is an initialization error'
+			        },
+			    null);
+	        }
+
+            const $postData = JSON.stringify($data);
+
+            let $postRequest = new Request({
+                url: EnvironmentHelper.getFirebaseSettings().databaseURL
+                + $path + '.json?auth='
+                + $self._requestToken,
                 method: 'POST',
                 data: $postData,
                 headers:{
@@ -382,56 +393,76 @@ const FirebaseDatabaseClient = (function(){
                 },
                 onFailure: function($xhr){
 
-                    let $response = JSON.decode($xhr.response);
+	                let $response = JSON.decode($xhr.response);
 
-                    // Check if it says that the token has expired.
-                    if($response.hasOwnProperty('error') && $response.error === 'Auth token is expired'){
+	                // Check if it says that the token has expired.
+	                if($response.hasOwnProperty('error') && $response.error === 'Auth token is expired'){
 
-                        // Get token.
-                        FirebaseAuthenticationManager.getUserToken(function ($error, $tokenPresent) {
+		                // Ask for a fresh token.
+		                $self.requestTokenRefresh(function ($error, $data) {
 
-                            if($error){
+			                if($error){
 
-                                console.error('FirebaseDatabaseClient.firebasePOST(): ' + $error);
-                                return $callback('Problem while trying to get token.', null);
-                            }
+				                console.error('FirebaseDatabaseClient.firebasePOST(): ');
+				                console.error($error);
+				                return $callback({
+						                message: 'Problem while trying to request refresh token.'
+					                },
+					            null);
+			                }
 
-                            $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
-                            $token = sessionStorage.getItem('FirebaseUserToken-' + $apiKey);
-                            $request.options.url = EnvironmentHelper.getFirebaseSettings().databaseURL + $path + '.json?auth=' + $token;
-                            $request.send();
-                        });
+			                if($data){
 
-                        return;
-                    }
+				                // Token is there. Update the request and send it.
+				                $postRequest.options.url = EnvironmentHelper.getFirebaseSettings().databaseURL
+					                + $path + '.json?auth='
+					                + $self._requestToken;
+				                $postRequest.send();
+			                }
+		                });
+	                }
+	                else{
 
-                    console.error('FirebaseDatabaseClient.firebasePOST(): ' + $xhr.response);
-                    return $callback('POST request for ' + $path + ' had an error!', null);
+		                console.error('FirebaseDatabaseClient.firebasePOST(): ');
+		                console.error($xhr);
+		                return $callback({
+				                message: 'Data for ' + $path + ' cannot be POST because an error!'
+			                },
+			            null);
+	                }
                 }
             });
 
-            if(!$token || $token === '' || typeof $token === 'undefined'){
+	        // Check if the request is good to go.
+	        if($self._requestToken){
 
-                // Get token.
-                FirebaseAuthenticationManager.getUserToken(function ($error, $tokenPresent) {
+		        $postRequest.send();
+	        }
+	        else{
 
-                    if($error){
+		        // Ask for a fresh token.
+		        $self.requestTokenRefresh(function ($error, $data) {
 
-                        console.error('FirebaseDatabaseClient.firebasePOST(): ' + $error);
-                        return $callback('Problem while trying to get token.', null);
-                    }
+			        if($error){
 
-                    $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
-                    $token = sessionStorage.getItem('FirebaseUserToken-' + $apiKey);
-                    $request.options.url = EnvironmentHelper.getFirebaseSettings().databaseURL + $path + '.json?auth=' + $token;
-                    $request.send();
-                });
+				        console.error('FirebaseDatabaseClient.firebasePOST(): ');
+				        console.error($error);
+				        return $callback({
+						        message: 'Problem while trying to request refresh token.'
+					        },
+					    null);
+			        }
 
-                return;
-            }
+			        if($data){
 
-            // There is a token.
-            $request.send();
+				        // Token is there. Update the request and send it.
+				        $postRequest.options.url = EnvironmentHelper.getFirebaseSettings().databaseURL
+					        + $path + '.json?auth='
+					        + $self._requestToken;
+				        $postRequest.send();
+			        }
+		        });
+	        }
         },
 
         /**
