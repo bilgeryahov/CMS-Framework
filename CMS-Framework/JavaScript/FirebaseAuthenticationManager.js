@@ -228,7 +228,7 @@ const FirebaseAuthenticationManager = (function(){
                 .getIdToken(true)
                 .then(function ($token) {
 
-                    // Save the current user's token.
+                    // Set the current user's token.
                     let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
                     sessionStorage.setItem('FirebaseUserToken-' + $apiKey, $token);
 
