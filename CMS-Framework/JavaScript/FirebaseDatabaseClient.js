@@ -588,10 +588,21 @@ const FirebaseDatabaseClient = (function(){
          * @param $locationUpdatePairs
          * @param $callback
          *
-         * @return void
+         * @return execution of callback
          */
 
         firebasePerformMultiLocationUpdate($locationUpdatePairs, $callback){
+
+	        const $self = this;
+
+	        // Check for initialization errors.
+	        if($self._initializationError){
+
+		        return $callback({
+				        message: 'FirebaseDatabaseClient.firebasePerformMultiLocationUpdate(): There is an initialization error'
+			        },
+			    null);
+	        }
 
            firebase
                .database()
