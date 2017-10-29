@@ -4,7 +4,7 @@
  * Exposes Firebase authentication management functionality.
  *
  * @author Bilger Yahov <bayahov1@gmail.com>
- * @version 3.5.0
+ * @version 3.5.2
  * @copyright © 2017 Bilger Yahov, all rights reserved.
  */
 
@@ -56,18 +56,18 @@ const FirebaseAuthenticationManager = (function(){
                 if($currentUser){
 
                     // If there is a user, set them a token.
-                    $self.setUserToken(function (error, data) {
+                    $self.setUserToken(function ($error, $data) {
 
-                        if(error){
+                        if($error){
 
                             console.error('FirebaseAuthenticationManager.init(): Could not set a token for the' +
                                 ' logged in user');
-                            console.log(error);
+                            console.log($error);
                             return;
                         }
 
                         // Everything fine.
-                        if(data){
+                        if($data){
 
 	                        $self._currentUser = $currentUser;
 	                        $self._authObserverManager.updateObservers('USER 1');
@@ -77,18 +77,18 @@ const FirebaseAuthenticationManager = (function(){
                 else{
 
                     // When the user logs out, make sure to clean their token.
-                    $self.clearUserToken(function (error, data) {
+                    $self.clearUserToken(function ($error, $data) {
 
-                       if(error){
+                       if($error){
 
 	                       console.error('FirebaseAuthenticationManager.init(): Could not clear the token for the' +
 		                       ' logged out user');
-	                       console.log(error);
+	                       console.log($error);
 	                       return;
                        }
 
                        // Everything fine.
-                       if(data){
+                       if($data){
 
 	                       $self._currentUser = null;
 	                       $self._authObserverManager.updateObservers('USER 0');
@@ -244,42 +244,42 @@ const FirebaseAuthenticationManager = (function(){
          * Clears the token of the signed-out user.
          * This function is not accessible from outside.
          *
-	     * @param callback
+	     * @param $callback
 	     *
          * @return success execution of the callback (Usually there
          * is nothing which can go wrong in the situation)
 	     */
 
-        clearUserToken(callback){
+        clearUserToken($callback){
 
 	        let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
 	        sessionStorage.removeItem('FirebaseUserToken-' + $apiKey);
 
-	        return callback(null, true);
+	        return $callback(null, true);
         },
 
 	    /**
          * Used to externally ask for a fresh user token.
          *
-	     * @param callback
+	     * @param $callback
          *
          * @return execution of the callback
 	     */
 
-	    refreshUserToken(callback){
+	    refreshUserToken($callback){
 
             const $self = this;
-	        $self.setUserToken(function (error, data) {
+	        $self.setUserToken(function ($error, $data) {
 
-		        if(error){
+		        if($error){
 
-			        return callback(error, null);
+			        return $callback($error, null);
 		        }
 
 		        // Everything fine.
-		        if(data){
+		        if($data){
 
-		            return callback(null, true);
+		            return $callback(null, true);
                 }
 	        });
         }
@@ -317,9 +317,9 @@ const FirebaseAuthenticationManager = (function(){
             Logic.logout();
         },
 
-	    refreshUserToken(callback){
+	    refreshUserToken($callback){
 
-            Logic.refreshUserToken(callback);
+            Logic.refreshUserToken($callback);
         }
     }
 })();
