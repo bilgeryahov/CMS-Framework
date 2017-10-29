@@ -63,9 +63,9 @@ const FirebaseDatabaseClient = (function(){
         },
 
 	    /**
-         * This function does not check for initialization error.
-         * It gets called from the main request functions.
-         * They should be aware if the was an initialization error.
+         * This function does not check for initialization errors.
+         * It gets called from the request functions.
+         * They should be aware if there was an initialization error.
          * If there is, this function should not get called.
          *
          * @param $callback
@@ -90,7 +90,7 @@ const FirebaseDatabaseClient = (function(){
 	                let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
 	                $self._requestToken = sessionStorage.getItem('FirebaseUserToken-' + $apiKey);
 
-                    // There is no data to return. Just indicate with true.
+                    // There is no data to return. Just indicate the job done.
                     return $callback(null, true);
                 }
             });
@@ -585,9 +585,6 @@ const FirebaseDatabaseClient = (function(){
          *      path : new data
          * }
          *
-         * So, simply the object should contain all the paths of the objects to be modified - as keys
-         * and the new data  - as values.
-         *
          * @param $locationUpdatePairs
          * @param $callback
          *
@@ -599,14 +596,16 @@ const FirebaseDatabaseClient = (function(){
            firebase
                .database()
                .ref()
-               .update($locationUpdatePairs)
-               .then(function ($data) {
+               .update($locationUpdatePairs, function ($error) {
 
-                   return $callback($data);
-               })
-               .catch(function ($error) {
+					if($error){
 
-                   return $callback($error);
+						return $callback($error, null);
+					}
+					else{
+
+						return $callback(null, true);
+					}
                });
         }
     };
