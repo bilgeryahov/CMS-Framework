@@ -69,10 +69,20 @@ const FirebaseDatabaseClient = (function(){
          * @param $extra
          * @param $callback
          *
-         * @return void
+         * @return callback execution
          */
 
         firebaseGET: function($path, $extra, $callback){
+
+            const $self = this;
+
+            if($self._initializationError){
+
+                return $callback({
+                    message: 'FirebaseDatabaseClient.firebaseGET(): There is an initialization error'
+                },
+                null);
+            }
 
             let $extraString = '';
 
