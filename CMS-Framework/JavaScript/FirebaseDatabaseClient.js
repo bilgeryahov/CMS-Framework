@@ -4,7 +4,7 @@
  * Exposes Firebase database management functionality.
  *
  * @author Bilger Yahov <bayahov1@gmail.com>
- * @version 4.3.2
+ * @version 4.4.0
  * @copyright © 2017 Bilger Yahov, all rights reserved.
  */
 
@@ -110,6 +110,7 @@ const FirebaseDatabaseClient = (function(){
 
             const $self = this;
 
+            // Check for initialization errors.
             if($self._initializationError){
 
                 return $callback({
@@ -118,6 +119,7 @@ const FirebaseDatabaseClient = (function(){
                 null);
             }
 
+            // Prepare GET request extra parameters.
             let $extraString = '';
 
             for(let $member in $extra){
@@ -131,8 +133,12 @@ const FirebaseDatabaseClient = (function(){
             // Remove the last & character.
             $extraString = $extraString.substring(0, $extraString.length-1);
 
-            new Request({
-                url: EnvironmentHelper.getFirebaseSettings().databaseURL + $path + '.json' + '?' + $extraString,
+	        // Prepare the request itself.
+            let $getRequest = new Request({
+                url: EnvironmentHelper.getFirebaseSettings().databaseURL
+                + $path + '.json?'
+                + $extraString
+                + '&auth=' + $self._requestToken,
                 method: 'GET',
                 onSuccess: function($data){
 
@@ -158,11 +164,78 @@ const FirebaseDatabaseClient = (function(){
                 },
                 onFailure: function($xhr){
 
-                    console.error('FirebaseDatabaseClient.firebaseGET(): ');
-                    console.error($xhr);
-                    return $callback('Data for ' + $path + ' did not arrive because an error!', null);
+	                let $response = JSON.decode($xhr.response);
+
+	                // Check if it says that the token has expired.
+	                if($response.hasOwnProperty('error') && $response.error === 'Auth token is expired'){
+
+		                // Ask for a fresh token.
+		                $self.requestTokenRefresh(function ($error, $data) {
+
+			                if($error){
+
+				                console.error('FirebaseDatabaseClient.firebaseGET(): ');
+				                console.error($error);
+				                return $callback({
+						                message: 'Problem while trying to request refresh token.'
+					                },
+					            null);
+			                }
+
+			                if($data){
+
+				                // Token is there. Update the request and send it.
+				                $getRequest.options.url = EnvironmentHelper.getFirebaseSettings().databaseURL
+					                + $path + '.json?'
+					                + $extraString
+					                + '&auth=' + $self._requestToken;
+				                $getRequest.send();
+			                }
+		                });
+	                }
+	                else{
+
+		                console.error('FirebaseDatabaseClient.firebaseGET(): ');
+		                console.error($xhr);
+		                return $callback({
+				                message: 'Data for ' + $path + ' did not arrive because an error!'
+			                },
+			            null);
+	                }
                 }
-            }).send();
+            });
+
+            // Check if the request is good to go.
+	        if($self._requestToken){
+
+	        	$getRequest.send();
+	        }
+	        else{
+
+	        	// Ask for a fresh token.
+		        $self.requestTokenRefresh(function ($error, $data) {
+
+		        	if($error){
+
+				        console.error('FirebaseDatabaseClient.firebaseGET(): ');
+				        console.error($error);
+				        return $callback({
+						        message: 'Problem while trying to request refresh token.'
+					        },
+					    null);
+			        }
+
+			        if($data){
+
+		        		// Token is there. Update the request and send it.
+				        $getRequest.options.url = EnvironmentHelper.getFirebaseSettings().databaseURL
+					        + $path + '.json?'
+					        + $extraString
+					        + '&auth=' + $self._requestToken;
+				        $getRequest.send();
+			        }
+		        });
+	        }
         },
 
         /**
