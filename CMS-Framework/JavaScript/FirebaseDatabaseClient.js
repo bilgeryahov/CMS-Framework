@@ -16,6 +16,9 @@ const FirebaseDatabaseClient = (function(){
 
     const Logic = {
 
+        _initializationError: null,
+        _requestToken: null,
+
         /**
          * Initialize.
          *
@@ -24,11 +27,14 @@ const FirebaseDatabaseClient = (function(){
 
         init: function(){
 
+            const $self = this;
+
             if(!FirebaseAuthenticationManager){
 
                 console.error('FirebaseDatabaseClient.init(): ' +
                     'FirebaseAuthenticationManager is missing!');
 
+                $self._initializationError = true;
                 return;
             }
 
@@ -37,6 +43,21 @@ const FirebaseDatabaseClient = (function(){
                 console.error('FirebaseDatabaseClient.init(): ' +
                     'EnvironmentHelper is missing!');
 
+	            $self._initializationError = true;
+                return;
+            }
+
+            try{
+
+	            // Try to prepare the request token.
+	            let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
+	            $self._requestToken = sessionStorage.getItem('FirebaseUserToken-' + $apiKey);
+            }
+            catch ($exception){
+
+                console.error('FirebaseDatabaseClient.init(): ');
+                console.error($exception);
+                $self._initializationError = true;
                 return;
             }
         },
