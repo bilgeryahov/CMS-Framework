@@ -60,7 +60,7 @@ const FirebaseAuthenticationManager = (function(){
 
                         if(error){
 
-                            console.error('FirebaseAuthenticationManager.init(): Could not get a token for the' +
+                            console.error('FirebaseAuthenticationManager.init(): Could not set a token for the' +
                                 ' logged in user');
                             console.log(error);
                             return;
@@ -211,8 +211,10 @@ const FirebaseAuthenticationManager = (function(){
 
         /**
          * Sets token for the currently signed-in user.
+         * The token gets stored in session storage.
          * This function is not accessible from outside.
-         * This function can be performed only by inner functions.
+         * If other JS controller needs to refresh a user token,
+         * there is a `refreshUserToken` function for that.
          *
          * @param $callback
          *
@@ -240,10 +242,12 @@ const FirebaseAuthenticationManager = (function(){
 
 	    /**
          * Clears the token of the signed-out user.
+         * This function is not accessible from outside.
          *
 	     * @param callback
 	     *
-         * @return success execution of the callback
+         * @return success execution of the callback (Usually there
+         * is nothing which can go wrong in the situation)
 	     */
 
         clearUserToken(callback){
@@ -255,7 +259,7 @@ const FirebaseAuthenticationManager = (function(){
         },
 
 	    /**
-         * Used to externally ask for a fresh token.
+         * Used to externally ask for a fresh user token.
          *
 	     * @param callback
          *
