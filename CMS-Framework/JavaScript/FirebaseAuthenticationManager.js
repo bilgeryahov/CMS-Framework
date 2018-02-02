@@ -68,11 +68,23 @@ const FirebaseAuthenticationManager = (function(){
                 else{
 
                     // When the user logs out, make sure to clean their token.
-                    $self.clearUserToken()
-                        .then(() => {
-                            $self._currentUser = null;
-                            $self._authObserverManager.updateObservers('USER 0');
-                        });
+                    $self.clearUserToken(function ($error, $data) {
+
+                       if($error){
+
+	                       console.error('FirebaseAuthenticationManager.init(): Could not clear the token for the' +
+		                       ' logged out user');
+	                       console.log($error);
+	                       return;
+                       }
+
+                       // Everything fine.
+                       if($data){
+
+	                       $self._currentUser = null;
+	                       $self._authObserverManager.updateObservers('USER 0');
+                       }
+                    });
                 }
             });
         },
@@ -221,14 +233,19 @@ const FirebaseAuthenticationManager = (function(){
 	    /**
          * Clears the token of the signed-out user.
          * This function is not accessible from outside.
+         *
+	     * @param $callback
 	     *
-         * @return Promise
+         * @return success execution of the callback (Usually there
+         * is nothing which can go wrong in the situation)
 	     */
 
-        clearUserToken(){
-            let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
-            sessionStorage.removeItem('FirebaseUserToken-' + $apiKey);
-            return Promise.resolve();
+        clearUserToken($callback){
+
+	        let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
+	        sessionStorage.removeItem('FirebaseUserToken-' + $apiKey);
+
+	        return $callback(null, true);
         },
 
 	    /**
@@ -236,7 +253,7 @@ const FirebaseAuthenticationManager = (function(){
          *
          * @return Promise
 	     */
-
+	    
 	    refreshUserToken(){
             const $self = this;
             return new Promise((resolve, reject) => {
