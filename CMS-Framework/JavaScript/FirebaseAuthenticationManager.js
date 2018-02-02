@@ -4,7 +4,7 @@
  * Exposes Firebase authentication management functionality.
  *
  * @author Bilger Yahov <bayahov1@gmail.com>
- * @version 3.6.0
+ * @version 3.5.2
  * @copyright © 2017 Bilger Yahov, all rights reserved.
  */
 
@@ -29,30 +29,36 @@ const FirebaseAuthenticationManager = (function(){
          */
 
         init: function(){
+
             const $self = this;
+
             if(!EnvironmentHelper){
+
                 console.error('FirebaseAuthenticationManager.init(): EnvironmentHelper is not present!');
                 return;
             }
 
             // Try to set a new Auth ObserverManager.
             try{
+
                 $self._authObserverManager = new ObserverManager();
             }
             catch($error){
+
                 console.error('FirebaseAuthenticationManager.init(): ' + $error);
                 return;
             }
 
             $self._authObserverManager.clearObservers();
 
-            firebase
-                .auth()
-                .onAuthStateChanged((currentUser) => {
-                if(currentUser){
+            firebase.auth().onAuthStateChanged(function($currentUser){
+
+                if($currentUser){
+
+                    // If there is a user, set them a token.
                     $self.setUserToken()
                         .then(() =>{
-                            $self._currentUser = currentUser;
+                            $self._currentUser = $currentUser;
                             $self._authObserverManager.updateObservers('USER 1');
                         })
                         .catch((error) => {
@@ -60,6 +66,7 @@ const FirebaseAuthenticationManager = (function(){
                         });
                 }
                 else{
+
                     // When the user logs out, make sure to clean their token.
                     $self.clearUserToken()
                         .then(() => {
@@ -77,6 +84,7 @@ const FirebaseAuthenticationManager = (function(){
          */
 
         getAuthObserverManager(){
+
             const $self = this;
             return $self._authObserverManager;
         },
@@ -89,6 +97,7 @@ const FirebaseAuthenticationManager = (function(){
          */
 
         getCurrentUser(){
+
             const $self = this;
             return $self._currentUser;
         },
@@ -105,26 +114,32 @@ const FirebaseAuthenticationManager = (function(){
          */
 
         login($email, $password){
+
             const $self = this;
+
             if($self.getCurrentUser()){
+
                 $self._authError = 'You cannot login, you are already logged in!';
                 $self._authObserverManager.updateObservers('ERROR 1');
                 return;
             }
 
-            firebase
-                .auth()
-                .signInWithEmailAndPassword($email, $password)
-                .catch(($error) => {
+            firebase.auth().signInWithEmailAndPassword($email, $password)
+                .catch(function($error){
+
                     $self._authError = 'Problem while logging in.';
 
                     if($error && $error.code){
+
                         if($error.code === 'auth/wrong-password'){
+
                             $self._authError = 'Wrong password';
                         }
                         else if($error.code === 'auth/user-not-found'){
+
                             $self._authError = 'Wrong e-mail address.';
                         }
+
                         console.error('FirebaseAuthenticationManager.login(): ');
                         console.error($error);
                     }
@@ -137,10 +152,11 @@ const FirebaseAuthenticationManager = (function(){
          * Returns the auth error, if any.
          * If there is no auth error, returns null.
          *
-         * @return Object | null
+         * @return {null}
          */
 
         getAuthError(){
+
             const $self = this;
             return $self._authError;
         },
@@ -152,17 +168,21 @@ const FirebaseAuthenticationManager = (function(){
          */
 
         logout(){
+
             const $self = this;
-            firebase
-                .auth()
-                .signOut()
-                .catch(($error) => {
+
+            firebase.auth().signOut()
+                .catch(function($error){
                     if($error){
+
                         $self._authError = 'Problem while logging out.';
+
                         if($error && $error.code){
+
                             console.error('FirebaseAuthenticationManager.logout(): ');
                             console.error($error);
                         }
+
                         $self._authObserverManager.updateObservers('ERROR 1');
                     }
                 });
@@ -234,35 +254,43 @@ const FirebaseAuthenticationManager = (function(){
     return{
 
         init(){
+
             Logic.init();
         },
 
         getAuthObserverManager(){
+
             return Logic.getAuthObserverManager();
         },
 
         getCurrentUser(){
+
             return Logic.getCurrentUser();
         },
 
         getAuthError(){
+
             return Logic.getAuthError();
         },
 
         login($email, $password){
+
             Logic.login($email, $password);
         },
 
         logout(){
+
             Logic.logout();
         },
 
 	    refreshUserToken(){
+
             Logic.refreshUserToken();
         }
     }
 })();
 
 document.addEvent('domready', function(){
+
     FirebaseAuthenticationManager.init();
 });
