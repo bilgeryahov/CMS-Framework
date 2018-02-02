@@ -4,7 +4,7 @@
  * Exposes Firebase authentication management functionality.
  *
  * @author Bilger Yahov <bayahov1@gmail.com>
- * @version 3.6.1
+ * @version 3.6.0
  * @copyright © 2017 Bilger Yahov, all rights reserved.
  */
 
@@ -175,25 +175,27 @@ const FirebaseAuthenticationManager = (function(){
          * If other JS controller needs to refresh a user token,
          * there is a 'refreshUserToken' function for that.
          *
-         * @return void
+         * @return Promise
          */
 
         setUserToken(){
-            firebase
-                .auth()
-                .currentUser
-                .getIdToken(true)
-                .then((token) => {
-                    // Set the current user's token.
-                    let apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
-                    sessionStorage.setItem('FirebaseUserToken-' + apiKey, token);
-                    return Promise.resolve();
-                })
-                .catch((error) => {
-                    console.error('FirebaseAuthenticationManager.setUserToken(): Problem while trying' +
-                        ' to set an ID token for the user.');
-                    return Promise.reject(new Error(error));
-                });
+            return new Promise((resolve, reject) => {
+                firebase
+                    .auth()
+                    .currentUser
+                    .getIdToken(true)
+                    .then((token) => {
+                        // Set the current user's token.
+                        let apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
+                        sessionStorage.setItem('FirebaseUserToken-' + apiKey, token);
+                        resolve();
+                    })
+                    .catch((error) => {
+                        console.error('FirebaseAuthenticationManager.setUserToken(): Problem while trying' +
+                            ' to set an ID token for the user.');
+                        reject(new Error(error));
+                    });
+            });
         },
 
 	    /**
@@ -212,18 +214,20 @@ const FirebaseAuthenticationManager = (function(){
 	    /**
          * Used to externally ask for a fresh user token.
          *
-         * @return void
+         * @return Promise
 	     */
 
 	    refreshUserToken(){
             const $self = this;
-            $self.setUserToken()
-                .then(() =>{
-                    return Promise.resolve();
-                })
-                .catch((error) => {
-                    return Promise.reject(error);
-                });
+            return new Promise((resolve, reject) => {
+                $self.setUserToken()
+                    .then(() =>{
+                        resolve();
+                    })
+                    .catch((error) => {
+                        reject(error);
+                    });
+            });
         }
     };
 
