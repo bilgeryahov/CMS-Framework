@@ -56,14 +56,23 @@ const FirebaseAuthenticationManager = (function(){
                 if($currentUser){
 
                     // If there is a user, set them a token.
-                    $self.setUserToken()
-                        .then(() =>{
-                            $self._currentUser = $currentUser;
-                            $self._authObserverManager.updateObservers('USER 1');
-                        })
-                        .catch((error) => {
-                            console.error(error);
-                        });
+                    $self.setUserToken(function ($error, $data) {
+
+                        if($error){
+
+                            console.error('FirebaseAuthenticationManager.init(): Could not set a token for the' +
+                                ' logged in user');
+                            console.log($error);
+                            return;
+                        }
+
+                        // Everything fine.
+                        if($data){
+
+	                        $self._currentUser = $currentUser;
+	                        $self._authObserverManager.updateObservers('USER 1');
+                        }
+                    });
                 }
                 else{
 
