@@ -68,32 +68,21 @@ const FirebaseDatabaseClient = (function(){
          * They should be aware if there was an initialization error.
          * If there is, this function should not get called.
          *
-         * @param $callback
-         *
-         * @return execution of the callback
+         * @return void
 	     */
 
-	    requestTokenRefresh($callback){
-
+	    requestTokenRefresh(){
 	        const $self = this;
-
-            FirebaseAuthenticationManager.refreshUserToken(function ($error, $data) {
-
-                if($error){
-
-                    return $callback($error, null);
-                }
-
-                if($data){
-
+            FirebaseAuthenticationManager.refreshUserToken()
+                .then(() => {
                     // Update our token.
-	                let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
-	                $self._requestToken = sessionStorage.getItem('FirebaseUserToken-' + $apiKey);
-
-                    // There is no data to return. Just indicate the job done.
-                    return $callback(null, true);
-                }
-            });
+                    let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
+                    $self._requestToken = sessionStorage.getItem('FirebaseUserToken-' + $apiKey);
+                    return Promise.resolve();
+                })
+                .catch((error) => {
+                   return Promise.reject(new Error(error));
+                });
         },
 
         /**
