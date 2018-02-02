@@ -251,27 +251,20 @@ const FirebaseAuthenticationManager = (function(){
 	    /**
          * Used to externally ask for a fresh user token.
          *
-	     * @param $callback
-         *
-         * @return execution of the callback
+         * @return Promise
 	     */
-
-	    refreshUserToken($callback){
-
+	    
+	    refreshUserToken(){
             const $self = this;
-	        $self.setUserToken(function ($error, $data) {
-
-		        if($error){
-
-			        return $callback($error, null);
-		        }
-
-		        // Everything fine.
-		        if($data){
-
-		            return $callback(null, true);
-                }
-	        });
+            return new Promise((resolve, reject) => {
+                $self.setUserToken()
+                    .then(() =>{
+                        resolve();
+                    })
+                    .catch((error) => {
+                        reject(error);
+                    });
+            });
         }
     };
 
@@ -307,9 +300,9 @@ const FirebaseAuthenticationManager = (function(){
             Logic.logout();
         },
 
-	    refreshUserToken($callback){
+	    refreshUserToken(){
 
-            Logic.refreshUserToken($callback);
+            Logic.refreshUserToken();
         }
     }
 })();
