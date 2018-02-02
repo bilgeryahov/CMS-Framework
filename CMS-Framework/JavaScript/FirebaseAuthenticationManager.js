@@ -73,7 +73,7 @@ const FirebaseAuthenticationManager = (function(){
         /**
          * Gets the Auth ObserverManager of FirebaseAuthenticationManager.
          *
-         * @return Object | null
+         * @return Object
          */
 
         getAuthObserverManager(){
