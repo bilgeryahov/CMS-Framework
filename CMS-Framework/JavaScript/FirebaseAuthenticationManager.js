@@ -222,7 +222,7 @@ const FirebaseAuthenticationManager = (function(){
                     return Promise.resolve();
                 })
                 .catch((error) => {
-                    return Promise.reject(error);
+                    return Promise.reject(new Error(error));
                 });
         }
     };
