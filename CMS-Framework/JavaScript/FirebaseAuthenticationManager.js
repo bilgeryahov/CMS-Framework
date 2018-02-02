@@ -216,28 +216,27 @@ const FirebaseAuthenticationManager = (function(){
          * If other JS controller needs to refresh a user token,
          * there is a `refreshUserToken` function for that.
          *
-         * @param $callback
-         *
-         * @return void
+         * @return Promise
          */
 
-        setUserToken($callback){
-
-            firebase.auth()
-                .currentUser
-                .getIdToken(true)
-                .then(function ($token) {
-
-                    // Set the current user's token.
-                    let $apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
-                    sessionStorage.setItem('FirebaseUserToken-' + $apiKey, $token);
-
-                    return $callback(null, true);
-                })
-                .catch(function ($error) {
-
-                    return $callback($error, null);
-                });
+        setUserToken(){
+            return new Promise((resolve, reject) => {
+                firebase
+                    .auth()
+                    .currentUser
+                    .getIdToken(true)
+                    .then((token) => {
+                        // Set the current user's token.
+                        let apiKey = EnvironmentHelper.getFirebaseSettings().apiKey;
+                        sessionStorage.setItem('FirebaseUserToken-' + apiKey, token);
+                        resolve();
+                    })
+                    .catch((error) => {
+                        console.error('FirebaseAuthenticationManager.setUserToken(): Problem while trying' +
+                            ' to set an ID token for the user.');
+                        reject(new Error(error));
+                    });
+            });
         },
 
 	    /**
