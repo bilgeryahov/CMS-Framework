@@ -73,7 +73,7 @@ const FirebaseAuthenticationManager = (function(){
         /**
          * Gets the Auth ObserverManager of FirebaseAuthenticationManager.
          *
-         * @return {Logic._authObserverManager|{}}
+         * @return Object | null
          */
 
         getAuthObserverManager(){
@@ -85,7 +85,7 @@ const FirebaseAuthenticationManager = (function(){
          * Returns the current user.
          * If no user is logged in, NULL is returned.
          *
-         * @return {null}
+         * @return Object | null
          */
 
         getCurrentUser(){
@@ -173,7 +173,7 @@ const FirebaseAuthenticationManager = (function(){
          * The token gets stored in session storage.
          * This function is not accessible from outside.
          * If other JS controller needs to refresh a user token,
-         * there is a `refreshUserToken` function for that.
+         * there is a 'refreshUserToken' function for that.
          *
          * @return Promise
          */
